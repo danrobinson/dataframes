@@ -1,0 +1,23 @@
+{
+  "name": "dataframes",
+  "version": "0.0.3",
+  "description": "Data manipulation and analysis tools for JavaScript.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "tsc && node ./lib/test/test.js",
+    "build": "tsc"
+  },
+  "author": { "name": "Dan Robinson", "email": "danrobinson010@gmail.com" },
+  "bugs": {
+    "url": "https://github.com/danrobinson/dataframes/issues"
+  },
+  "homepage": "https://github.com/danrobinson/dataframes#readme",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^9.6.6",
+    "ts-node": "^6.0.0",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.12.0",
+    "typescript": "^2.8.3"
+  }
+}
