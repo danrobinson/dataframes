@@ -84,13 +84,7 @@ export class Dataframe {
   public static fromCSV(path: string) {
     const text = readFileSync(path, { encoding: 'utf-8' })
     const rows = parse(text, { header: true, dynamicTyping: true }).data
-    console.log('rows', rows)
     return new Dataframe(undefined, rows)
-    // console.log(
-    //   parse(text, {}, (err, output) => {
-    //     console.log(output)
-    //   })
-    // )
   }
 
   public table() {
@@ -240,9 +234,14 @@ export class Dataframe {
       const groupKey = this.getGroupKey(row)
       let acc = groups.get(groupKey)
       if (acc === undefined) {
-        acc = { ...initial }
+        acc = {}
         for (const groupColumn of this._groups) {
           acc[groupColumn] = row[groupColumn]
+        }
+        for (const key in initial) {
+          if (initial.hasOwnProperty(key)) {
+            acc[key] = initial[key]
+          }
         }
       }
       for (const key of keys) {

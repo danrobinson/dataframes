@@ -4,7 +4,7 @@
     "noImplicitThis": true,
     "strictNullChecks": true,
     "lib": ["es2015"],
-    "types": ["node"],
+    "types": ["node", "mocha", "chai"],
     "target": "es6",
     "moduleResolution": "node",
     "module": "commonjs",

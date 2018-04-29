@@ -11,6 +11,7 @@
     "member-ordering": false,
     "no-var-requires": false,
     "no-bitwise": false,
+    "no-empty": false,
     "variable-name": false
   },
   "rulesDirectory": []
