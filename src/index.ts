@@ -1,4 +1,6 @@
-import { ENGINE_METHOD_PKEY_METHS } from 'constants'
+import * as cTable from 'console.table'
+import { readFileSync } from 'fs'
+import { parse } from 'papaparse'
 
 export interface Vector {
   name: string
@@ -77,6 +79,22 @@ export class Dataframe {
     } else {
       throw new Error('either columns or rows must be passed')
     }
+  }
+
+  public static fromCSV(path: string) {
+    const text = readFileSync(path, { encoding: 'utf-8' })
+    const rows = parse(text, { header: true, dynamicTyping: true }).data
+    console.log('rows', rows)
+    return new Dataframe(undefined, rows)
+    // console.log(
+    //   parse(text, {}, (err, output) => {
+    //     console.log(output)
+    //   })
+    // )
+  }
+
+  public table() {
+    return cTable.getTable(this.rows())
   }
 
   public columns(): Vector[] {
@@ -242,7 +260,9 @@ export class Dataframe {
 
   public summarize(arg: { [s: string]: Summarization }) {
     const groups = this._summarize(arg)
-    return new Dataframe(undefined, Array.from(groups.values()))
+    const newGroups = [...this._groups]
+    newGroups.pop()
+    return new Dataframe(undefined, Array.from(groups.values()), newGroups)
   }
 
   public groupBy(arg: string | string[]) {

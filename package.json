@@ -7,17 +7,29 @@
     "test": "tsc && node ./lib/test/test.js",
     "build": "tsc"
   },
-  "author": { "name": "Dan Robinson", "email": "danrobinson010@gmail.com" },
+  "contributors": [
+    {
+      "name": "Dan Robinson",
+      "email": "danrobinson010@gmail.com"
+    },
+    {
+      "name": "Ian Allen"
+    }
+  ],
   "bugs": {
     "url": "https://github.com/danrobinson/dataframes/issues"
   },
   "homepage": "https://github.com/danrobinson/dataframes#readme",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^9.6.6",
+    "@types/node": "^9.6.7",
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.12.0",
     "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "papaparse": "^4.4.0"
   }
 }
