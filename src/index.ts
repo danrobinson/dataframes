@@ -1,6 +1,7 @@
 import * as cTable from 'console.table'
 import { readFileSync } from 'fs'
 import { parse } from 'papaparse'
+import { Z_FILTERED } from 'zlib'
 
 export interface Vector {
   name: string
@@ -68,9 +69,13 @@ export class Dataframe {
   constructor(
     private _columns?: Vector[],
     private _rows?: object[],
-    private _groups: string[] = []
+    private _groups: string[] = [],
+    _columnNames?: string[]
   ) {
-    if (_columns !== undefined) {
+    // use or infer columnNames
+    if (_columnNames !== undefined) {
+      this.columnNames = _columnNames
+    } else if (_columns !== undefined) {
       this.columnNames = _columns.map(column => column.name)
     } else if (_rows !== undefined) {
       const columnNameSet: Set<string> = new Set()
@@ -144,9 +149,9 @@ export class Dataframe {
           const sourceName = arg[targetName]
           const index = this.columns()
             .map(column => column.name)
-            .indexOf(targetName)
+            .indexOf(sourceName)
           if (index === -1) {
-            throw new Error(`no column with name: ${targetName}`)
+            throw new Error(`no column with name: ${sourceName}`)
           }
           const oldColumn = this.columns()[index]
           newColumns.push({ name: targetName, values: oldColumn.values })
@@ -275,5 +280,131 @@ export class Dataframe {
       }
     })
     return new Dataframe(this._columns, this._rows, [...this._groups, ...keys])
+  }
+
+  public getIndex(getKey: (row: any) => string): Map<string, any[]> {
+    const keyed = new Map<string, any[]>()
+    for (const row of this.rows()) {
+      const key = getKey(row)
+      const matchingRows = keyed.get(key)
+      if (matchingRows === undefined) {
+        keyed.set(key, [row])
+      } else {
+        matchingRows.push(row)
+      }
+    }
+    return keyed
+  }
+
+  private join(
+    other: Dataframe,
+    joinType: 'left' | 'right' | 'inner' | 'full',
+    options?: string | string[] | { [s: string]: string }
+  ) {
+    const newRows: any[] = []
+    let getOwnKey: (row: any) => string
+    let getOtherKey: (row: any) => string
+    let newColumnNames: string[] = []
+    if (options === undefined) {
+      // natural join
+      const otherNames = other.columnNames
+      const commonNames = this.columnNames.filter(
+        name => otherNames.indexOf(name) !== -1
+      )
+      const rightNames = otherNames.filter(
+        name => this.columnNames.indexOf(name) === -1
+      )
+      newColumnNames = [...this.columnNames, ...rightNames]
+      getOwnKey = row => JSON.stringify(commonNames.map(key => row[key]))
+      getOtherKey = getOwnKey
+    } else if (typeof options === 'string') {
+      getOwnKey = row => row[options]
+      getOtherKey = getOwnKey
+    } else if (Array.isArray(options)) {
+      getOwnKey = row => JSON.stringify(options.map(key => row[key]))
+      getOtherKey = getOwnKey
+    } else if (typeof options === 'object') {
+      const ownKeys: string[] = []
+      const otherKeys: string[] = []
+      for (const key in options) {
+        if (options.hasOwnProperty(key)) {
+          ownKeys.push(key)
+          otherKeys.push(options[key])
+        }
+      }
+      getOwnKey = row => JSON.stringify(ownKeys.map(key => row[key]))
+      getOtherKey = row => JSON.stringify(otherKeys.map(key => row[key]))
+    } else {
+      throw new Error('not yet supported')
+    }
+    if (joinType !== 'right') {
+      const otherIndex = other.getIndex(getOtherKey)
+      for (const row of this.rows()) {
+        const key = getOwnKey(row)
+        const matches = otherIndex.get(key)
+        if (matches === undefined) {
+          if (joinType === 'left' || joinType === 'full') {
+            const newRow = { ...row }
+            newRows.push(newRow)
+          }
+        } else {
+          for (const match of matches) {
+            const newRow = {
+              ...row,
+              ...match,
+            }
+            newRows.push(newRow)
+          }
+        }
+      }
+    }
+    if (joinType === 'full' || joinType === 'right') {
+      const thisIndex = this.getIndex(getOwnKey)
+      for (const row of other.rows()) {
+        const key = getOtherKey(row)
+        const matches = thisIndex.get(key)
+        if (matches === undefined) {
+          const newRow = { ...row }
+          newRows.push(newRow)
+        } else if (joinType === 'right') {
+          for (const match of matches) {
+            const newRow = {
+              ...match,
+              ...row,
+            }
+            newRows.push(newRow)
+          }
+        }
+      }
+    }
+    return new Dataframe(undefined, newRows, undefined, newColumnNames)
+  }
+
+  public leftJoin(
+    other: Dataframe,
+    options?: string | { [s: string]: string }
+  ) {
+    return this.join(other, 'left', options)
+  }
+
+  public rightJoin(
+    other: Dataframe,
+    options?: string | { [s: string]: string }
+  ) {
+    return this.join(other, 'right', options)
+  }
+
+  public innerJoin(
+    other: Dataframe,
+    options?: string | { [s: string]: string }
+  ) {
+    return this.join(other, 'inner', options)
+  }
+
+  public fullJoin(
+    other: Dataframe,
+    options?: string | { [s: string]: string }
+  ) {
+    return this.join(other, 'full', options)
   }
 }
