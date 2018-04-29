@@ -1,6 +1,6 @@
 import * as cTable from 'console.table'
 import { readFileSync } from 'fs'
-import { parse } from 'papaparse'
+import { parse, unparse } from 'papaparse'
 import { Z_FILTERED } from 'zlib'
 
 export interface Vector {
@@ -90,6 +90,10 @@ export class Dataframe {
     const text = readFileSync(path, { encoding: 'utf-8' })
     const rows = parse(text, { header: true, dynamicTyping: true }).data
     return new Dataframe(undefined, rows)
+  }
+
+  public toCSV() {
+    return unparse(this.rows())
   }
 
   public table() {

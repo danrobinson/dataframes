@@ -166,4 +166,10 @@ describe('Dataframe', () => {
       expect(joined.count()).to.equal(336776)
     }).timeout(3000)
   })
+  describe('toCSV', () => {
+    it('should be able to convert back to CSV', () => {
+      const result = flights.toCSV()
+      expect(result.length).to.equal(31390625)
+    }).timeout(10000)
+  })
 })
